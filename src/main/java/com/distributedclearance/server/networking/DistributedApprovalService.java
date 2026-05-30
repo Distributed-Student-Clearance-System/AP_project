@@ -1,10 +1,7 @@
 package com.distributedclearance.server.networking;
 
-import java.util.Random;
-
 import com.distributedclearance.database.dao.ApprovalDAO;
 import com.distributedclearance.models.Approval;
-import com.distributedclearance.models.enums.ApprovalStatus;
 import com.distributedclearance.models.enums.Department;
 
 public class DistributedApprovalService {
@@ -38,51 +35,21 @@ public class DistributedApprovalService {
                 return;
             }
 
-            Random random = new Random();
-
-            boolean approved =
-                    random.nextBoolean();
-
-            ApprovalStatus status =
-                    approved
-                    ? ApprovalStatus.APPROVED
-                    : ApprovalStatus.REJECTED;
-
-            approvalDAO.updateApprovalStatus(
-                    approval.getId(),
-                    status,
-                    "Processed automatically"
-            );
-
-            String notification =
-                    department.name()
-                    + " -> "
-                    + status.name();
-
-            NotificationSender.send(notification);
-
-            approvalDAO.processFinalRequestStatus(
-                    requestId
-            );
-
-            NotificationSender.send(
-                department
-                + " processed request "
-                + requestId
-                + " -> "
-                + status
-            );
-
             System.out.println(
                     department
-                    + " finished processing "
+                    + " received request "
                     + requestId
-                    + " -> "
-                    + status
+                    + " and left it pending for officer review"
             );
 
         } catch (InterruptedException e) {
-            e.printStackTrace();
+                        System.err.println(
+                                        "[DistributedApprovalService] Processing interrupted for request "
+                                        + requestId
+                                        + " at "
+                                        + department
+                        );
+                        Thread.currentThread().interrupt();
         }
     }
 }

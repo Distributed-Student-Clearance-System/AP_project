@@ -1,10 +1,8 @@
 package com.distributedclearance.models.enums;
 
 public enum RequestStatus {
-
     PENDING,
-    APPROVED,
+    CLEARED,
     REJECTED,
     FULLY_APPROVED
-
 }

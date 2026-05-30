@@ -9,8 +9,10 @@ import java.util.List;
 
 import com.distributedclearance.database.DatabaseManager;
 import com.distributedclearance.models.Approval;
+import com.distributedclearance.models.OfficerRequestRecord;
 import com.distributedclearance.models.enums.ApprovalStatus;
 import com.distributedclearance.models.enums.Department;
+import com.distributedclearance.models.enums.RequestStatus;
 
 public class ApprovalDAO {
     private final Connection connection;
@@ -67,6 +69,45 @@ public class ApprovalDAO {
             e.printStackTrace();
         }
         return approvals;
+    }
+
+    public List<OfficerRequestRecord> getPendingRequestsForDepartment(
+            Department department
+    ) {
+        List<OfficerRequestRecord> requests = new ArrayList<>();
+
+        String sql =
+                "SELECT a.id AS approval_id, a.request_id, u.full_name, a.status " +
+                "FROM approvals a " +
+                "JOIN clearance_requests r ON a.request_id = r.request_id " +
+                "JOIN students s ON r.student_id = s.id " +
+                "JOIN users u ON s.user_id = u.id " +
+                "WHERE a.department_name = ? " +
+                "AND a.status = 'PENDING' " +
+                "ORDER BY r.submitted_at ASC, a.id ASC";
+
+        try {
+            PreparedStatement pstmt = connection.prepareStatement(sql);
+            pstmt.setString(1, department.name());
+
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                requests.add(
+                        new OfficerRequestRecord(
+                                rs.getInt("approval_id"),
+                                rs.getInt("request_id"),
+                                rs.getString("full_name"),
+                                rs.getString("status")
+                        )
+                );
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return requests;
     }
 
     public void updateApprovalStatus(int approvalId, ApprovalStatus status, String comment) {
@@ -177,15 +218,22 @@ public class ApprovalDAO {
 
     public void processFinalRequestStatus(int requestId) {
         List<Approval> approvals = getApprovalsByRequest(requestId);
+        RequestStatus finalStatus = determineFinalRequestStatus(approvals);
+
+        RequestDAO requestDAO = new RequestDAO();
+        requestDAO.updateRequestStatus(requestId, finalStatus.name());
+    }
+
+    public RequestStatus determineFinalRequestStatus(List<Approval> approvals) {
+        if (approvals == null || approvals.isEmpty()) {
+            return RequestStatus.PENDING;
+        }
+
         boolean allApproved = true;
 
         for (Approval approval : approvals) {
             if (approval.getStatus() == ApprovalStatus.REJECTED) {
-
-                RequestDAO requestDAO = new RequestDAO();
-                requestDAO.updateRequestStatus(requestId, "REJECTED");
-
-                return;
+                return RequestStatus.REJECTED;
             }
 
             if (approval.getStatus() != ApprovalStatus.APPROVED) {
@@ -194,9 +242,10 @@ public class ApprovalDAO {
         }
 
         if (allApproved) {
-            RequestDAO requestDAO = new RequestDAO();
-            requestDAO.updateRequestStatus(requestId, "APPROVED");
+            return RequestStatus.CLEARED;
         }
+
+        return RequestStatus.PENDING;
     }
 
     public Approval getApprovalByRequestAndDepartment(int requestId, Department department) {

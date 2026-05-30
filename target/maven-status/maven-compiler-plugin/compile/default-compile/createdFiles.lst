@@ -4,6 +4,7 @@ com\distributedclearance\gui\screens\admin\AdminDashboard.class
 com\distributedclearance\database\dao\StudentDAO.class
 com\distributedclearance\models\Approval.class
 com\distributedclearance\database\dao\UserDAO$1.class
+com\distributedclearance\server\networking\DistributedApprovalService$1.class
 com\distributedclearance\utils\Constants.class
 com\distributedclearance\models\enums\NotificationType.class
 com\distributedclearance\models\Notification.class

@@ -6,8 +6,6 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import com.distributedclearance.models.enums.Department;
-
 public class DepartmentServer {
 
     private final int port;
@@ -30,9 +28,7 @@ public class DepartmentServer {
             );
 
             while (true) {
-
                 try (Socket socket = serverSocket.accept()) {
-
                     BufferedReader reader =
                             new BufferedReader(
                                     new InputStreamReader(
@@ -70,24 +66,11 @@ public class DepartmentServer {
                         continue;
                     }
 
-                    DistributedApprovalService service =
-                            new DistributedApprovalService();
-
-                    service.processApproval(
-                            requestId,
-                            Department.valueOf(departmentName)
-                    );
-
                     System.out.println(
                             departmentName
-                            + " finished processing "
+                            + " received request "
                             + requestId
-                    );
-
-                    NotificationSender.send(
-                            departmentName
-                            + " processed request "
-                            + requestId
+                            + " and left it pending for officer review"
                     );
 
                 } catch (IOException e) {

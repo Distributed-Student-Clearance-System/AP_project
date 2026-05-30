@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.distributedclearance.database.DatabaseManager;
 import com.distributedclearance.models.Admin;
@@ -59,6 +61,52 @@ public class UserDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public int getTotalUsers() {
+        String sql = "SELECT COUNT(*) AS total_users FROM users";
+
+        try {
+            PreparedStatement pstmt = connection.prepareStatement(sql);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("total_users");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    public List<String> getAllUsersSummary() {
+        List<String> users = new ArrayList<>();
+
+        String sql =
+                "SELECT id, username, full_name, role " +
+                "FROM users " +
+                "ORDER BY id ASC";
+
+        try {
+            PreparedStatement pstmt = connection.prepareStatement(sql);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                users.add(
+                        "#" + rs.getInt("id") +
+                        " | " + rs.getString("full_name") +
+                        " | @" + rs.getString("username") +
+                        " | " + rs.getString("role")
+                );
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return users;
     }
 
     public UserRole getUserRole(String username) {
