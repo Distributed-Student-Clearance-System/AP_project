@@ -40,7 +40,7 @@ public class OfficerDashboard extends BaseScreen {
 
     @Override
     protected void initialize() {
-        // Step 1: Standard top banner view configuration
+        // Step 1: Render the standardized top banner with working logout functionality
         setupTopHeaderBar(officer.getDepartment() + " Officer Dashboard");
 
         VBox container = new VBox(15);
@@ -50,13 +50,13 @@ public class OfficerDashboard extends BaseScreen {
         statusLabel = new Label("Select a pending request and choose a decision.");
         statusLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #cbd5e1;");
 
-        // Step 2: Build TableView
+        // Step 2: Build TableView layout
         requestTable = new TableView<>();
         requestTable.setPrefHeight(320);
         requestTable.setStyle("-fx-control-inner-background: #1e293b; -fx-text-fill: #ffffff; -fx-border-color: #334155;");
         requestTable.setPlaceholder(new Label("No pending requests for your department."));
 
-        // Step 3: Define columns with fallback graphic nodes to force dark text
+        // Step 3: Define explicit graphic header labels to force dark text compatibility override loops
         TableColumn<OfficerRequestRecord, String> studentNameColumn = new TableColumn<>();
         studentNameColumn.setCellValueFactory(new PropertyValueFactory<>("studentName"));
         studentNameColumn.setPrefWidth(250);
@@ -86,7 +86,7 @@ public class OfficerDashboard extends BaseScreen {
         commentArea.setPrefHeight(100);
         commentArea.setStyle("-fx-control-inner-background: #1e293b; -fx-text-fill: #ffffff; -fx-border-color: #334155; -fx-border-radius: 4px;");
 
-        // Step 5: Action buttons panel mapping
+        // Step 5: Action buttons container layout setup
         Button approveButton = new Button("Approve Request");
         Button rejectButton = new Button("Reject Request");
 
@@ -105,9 +105,10 @@ public class OfficerDashboard extends BaseScreen {
         buttonContainer.setAlignment(Pos.CENTER);
         buttonContainer.getChildren().addAll(approveButton, rejectButton);
 
-        // Step 6: Initialize processing threads
+        // Step 6: Initial execution data fetch
         loadPendingRequests(true);
 
+        // Auto table refresh heartbeat synchronization loop runs every 3 seconds
         refreshTimeline = new Timeline(
                 new KeyFrame(Duration.seconds(3), event -> loadPendingRequests(true))
         );
@@ -152,11 +153,13 @@ public class OfficerDashboard extends BaseScreen {
             return;
         }
 
+        // Commits the review note left inside commentArea directly to the database
         approvalDAO.updateApprovalStatus(selectedRequest.getApprovalId(), status, commentArea.getText().trim());
         approvalDAO.processFinalRequestStatus(selectedRequest.getRequestId());
 
         String actionWord = (status == ApprovalStatus.APPROVED) ? "approved" : "rejected";
 
+        // Dispatch notification update payload parameters across socket pipelines
         NotificationSender.send(officer.getDepartment().name() + " officer " + officer.getFullName() + " " + actionWord + " request " + selectedRequest.getRequestId());
 
         statusLabel.setText("Success: Request #" + selectedRequest.getRequestId() + " has been " + actionWord + ".");
