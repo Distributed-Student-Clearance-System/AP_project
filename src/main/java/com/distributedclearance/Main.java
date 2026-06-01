@@ -15,7 +15,11 @@ public class Main extends Application {
 
         stage.setTitle("Distributed Student Clearance System");
 
-        stage.setScene(loginScreen.createScene());
+        var scene = loginScreen.createScene();
+        SceneManager.applyTheme(scene);
+
+        stage.setScene(scene);
+        // stage.setMaximized(true);
         stage.show();
     }
 

@@ -1,18 +1,20 @@
 package com.distributedclearance.gui.screens.admin;
 
-import java.util.List;
-
 import com.distributedclearance.database.dao.RequestDAO;
 import com.distributedclearance.database.dao.UserDAO;
+import com.distributedclearance.gui.navigation.SceneManager;
 import com.distributedclearance.gui.screens.BaseScreen;
 import com.distributedclearance.models.Admin;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 
@@ -27,7 +29,8 @@ public class AdminDashboard extends BaseScreen {
     private Label totalApprovedLabel;
     private Label totalRejectedLabel;
     private Label totalPendingLabel;
-    private TextArea detailsArea;
+    private TableView<String> usersTable;
+    private TableView<String> requestsTable;
 
     public AdminDashboard(Admin admin) {
         this.admin = admin;
@@ -36,18 +39,19 @@ public class AdminDashboard extends BaseScreen {
 
     @Override
     protected void initialize() {
-        VBox container = new VBox(15);
+        VBox container = new VBox(16);
         container.setPadding(new Insets(20));
-        container.setAlignment(Pos.TOP_CENTER);
+        container.setFillWidth(true);
+        container.getStyleClass().add("dashboard-card");
 
         Label title = new Label("Admin Dashboard");
-
-        title.setStyle(
-                "-fx-font-size: 24px;" +
-                "-fx-font-weight: bold;"
-        );
+        title.getStyleClass().add("app-title");
 
         Label welcomeLabel = new Label("Welcome, " + admin.getFullName());
+        welcomeLabel.getStyleClass().add("welcome-label");
+
+        Label statisticsTitle = new Label("Statistics");
+        statisticsTitle.getStyleClass().add("section-title");
 
         totalUsersLabel = new Label();
         totalRequestsLabel = new Label();
@@ -62,7 +66,7 @@ public class AdminDashboard extends BaseScreen {
         styleStatLabel(totalPendingLabel);
 
         VBox statsBox = new VBox(10);
-        statsBox.setAlignment(Pos.CENTER_LEFT);
+        statsBox.setFillWidth(true);
         statsBox.getChildren().addAll(
                 totalUsersLabel,
                 totalRequestsLabel,
@@ -70,38 +74,46 @@ public class AdminDashboard extends BaseScreen {
                 totalRejectedLabel,
                 totalPendingLabel
         );
+        statsBox.getStyleClass().add("section-card");
 
-        Button viewUsersButton = new Button("View All Users");
-        Button viewRequestsButton = new Button("View All Requests");
+        Label usersTitle = new Label("Users Table");
+        usersTitle.getStyleClass().add("section-title");
+
+        usersTable = new TableView<>();
+        usersTable.setPlaceholder(new Label("No users found."));
+        usersTable.getStyleClass().add("dark-table");
+        usersTable.setMaxWidth(Double.MAX_VALUE);
+
+        TableColumn<String, String> userSummaryColumn = new TableColumn<>("User Summary");
+        userSummaryColumn.setCellValueFactory(cellData ->
+            new SimpleStringProperty(cellData.getValue())
+        );
+        usersTable.getColumns().add(userSummaryColumn);
+
+        Label requestsTitle = new Label("Requests Table");
+        requestsTitle.getStyleClass().add("section-title");
+
+        requestsTable = new TableView<>();
+        requestsTable.setPlaceholder(new Label("No requests found."));
+        requestsTable.getStyleClass().add("dark-table");
+        requestsTable.setMaxWidth(Double.MAX_VALUE);
+
+        TableColumn<String, String> requestSummaryColumn = new TableColumn<>("Request Summary");
+        requestSummaryColumn.setCellValueFactory(cellData ->
+            new SimpleStringProperty(cellData.getValue())
+        );
+        requestsTable.getColumns().add(requestSummaryColumn);
+
         Button refreshButton = new Button("Refresh Statistics");
 
-        viewUsersButton.setPrefWidth(180);
-        viewRequestsButton.setPrefWidth(180);
-        refreshButton.setPrefWidth(180);
+        refreshButton.getStyleClass().add("primary-button");
 
         HBox buttonRow = new HBox(15);
-        buttonRow.setAlignment(Pos.CENTER);
-        buttonRow.getChildren().addAll(
-                viewUsersButton,
-                viewRequestsButton,
-                refreshButton
-        );
+        buttonRow.setFillHeight(true);
+        buttonRow.getChildren().add(refreshButton);
 
-        detailsArea = new TextArea();
-        detailsArea.setEditable(false);
-        detailsArea.setWrapText(true);
-        detailsArea.setPrefHeight(260);
-        detailsArea.setPromptText("Use the buttons above to view users or requests.");
-
-        viewUsersButton.setOnAction(event -> {
-            List<String> users = userDAO.getAllUsersSummary();
-            detailsArea.setText(buildSectionText("All Users", users));
-        });
-
-        viewRequestsButton.setOnAction(event -> {
-            List<String> requests = requestDAO.getAllRequestsSummary();
-            detailsArea.setText(buildSectionText("All Requests", requests));
-        });
+        VBox.setVgrow(usersTable, Priority.ALWAYS);
+        VBox.setVgrow(requestsTable, Priority.ALWAYS);
 
         refreshButton.setOnAction(event -> {
             refreshStatistics();
@@ -110,9 +122,13 @@ public class AdminDashboard extends BaseScreen {
         container.getChildren().addAll(
                 title,
                 welcomeLabel,
+                statisticsTitle,
                 statsBox,
                 buttonRow,
-                detailsArea
+                usersTitle,
+                usersTable,
+                requestsTitle,
+                requestsTable
         );
 
         setCenter(container);
@@ -126,6 +142,9 @@ public class AdminDashboard extends BaseScreen {
         totalApprovedLabel.setText("Total Approved Requests: " + requestDAO.getApprovedRequests());
         totalRejectedLabel.setText("Total Rejected Requests: " + requestDAO.getRejectedRequests());
         totalPendingLabel.setText("Total Pending Requests: " + requestDAO.getPendingRequests());
+
+        usersTable.setItems(FXCollections.observableArrayList(userDAO.getAllUsersSummary()));
+        requestsTable.setItems(FXCollections.observableArrayList(requestDAO.getAllRequestsSummary()));
     }
 
     private void styleStatLabel(Label label) {
@@ -135,22 +154,9 @@ public class AdminDashboard extends BaseScreen {
         );
     }
 
-    private String buildSectionText(String title, List<String> items) {
-        StringBuilder builder = new StringBuilder(title).append("\n\n");
-
-        if (items == null || items.isEmpty()) {
-            builder.append("No records found.");
-            return builder.toString();
-        }
-
-        for (String item : items) {
-            builder.append(item).append("\n");
-        }
-
-        return builder.toString();
-    }
-
     public Scene createScene() {
-        return new Scene(this, 1000, 700);
+        Scene scene = new Scene(this, 1000, 700);
+        SceneManager.applyTheme(scene);
+        return scene;
     }
 }

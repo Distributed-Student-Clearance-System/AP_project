@@ -25,9 +25,9 @@ public class ApprovalDAO {
     ) {
 
         String sql =
-                "INSERT INTO approvals " +
-                "(request_id, department_name, status, comment) " +
-                "VALUES (?, ?, ?, ?)";
+            "INSERT INTO approvals " +
+            "(request_id, department_name, status, comment) " +
+            "VALUES (?, ?, ?, ?)";
 
         try {
 
@@ -49,9 +49,9 @@ public class ApprovalDAO {
     public List<Approval> getPendingApprovals(Department department) {
         List<Approval> approvals = new ArrayList<>();
         String sql =
-                "SELECT * FROM approvals " +
-                "WHERE department_name = ? " +
-                "AND status = 'PENDING'";
+            "SELECT * FROM approvals " +
+            "WHERE department_name = ? " +
+            "AND status = 'PENDING'";
 
         try {
             PreparedStatement pstmt = connection.prepareStatement(sql);
@@ -60,7 +60,7 @@ public class ApprovalDAO {
 
             while (rs.next()) {
                 Approval approval = new Approval(rs.getInt("id"), rs.getInt("request_id"),Department.valueOf(rs.getString("department_name")),
-                                ApprovalStatus.valueOf(rs.getString("status")), rs.getString("comment"));
+                        ApprovalStatus.valueOf(rs.getString("status")), rs.getString("comment"));
 
                 approvals.add(approval);
             }
@@ -71,20 +71,18 @@ public class ApprovalDAO {
         return approvals;
     }
 
-    public List<OfficerRequestRecord> getPendingRequestsForDepartment(
-            Department department
-    ) {
+    public List<OfficerRequestRecord> getPendingRequestsForDepartment(Department department) {
         List<OfficerRequestRecord> requests = new ArrayList<>();
 
         String sql =
-                "SELECT a.id AS approval_id, a.request_id, u.full_name, a.status " +
-                "FROM approvals a " +
-                "JOIN clearance_requests r ON a.request_id = r.request_id " +
-                "JOIN students s ON r.student_id = s.id " +
-                "JOIN users u ON s.user_id = u.id " +
-                "WHERE a.department_name = ? " +
-                "AND a.status = 'PENDING' " +
-                "ORDER BY r.submitted_at ASC, a.id ASC";
+            "SELECT a.id AS approval_id, a.request_id, u.full_name, a.status " +
+            "FROM approvals a " +
+            "JOIN clearance_requests r ON a.request_id = r.request_id " +
+            "JOIN students s ON r.student_id = s.id " +
+            "JOIN users u ON s.user_id = u.id " +
+            "WHERE a.department_name = ? " +
+            "AND a.status = 'PENDING' " +
+            "ORDER BY r.submitted_at ASC, a.id ASC";
 
         try {
             PreparedStatement pstmt = connection.prepareStatement(sql);
@@ -94,12 +92,12 @@ public class ApprovalDAO {
 
             while (rs.next()) {
                 requests.add(
-                        new OfficerRequestRecord(
-                                rs.getInt("approval_id"),
-                                rs.getInt("request_id"),
-                                rs.getString("full_name"),
-                                rs.getString("status")
-                        )
+                    new OfficerRequestRecord(
+                        rs.getInt("approval_id"),
+                        rs.getInt("request_id"),
+                        rs.getString("full_name"),
+                        rs.getString("status")
+                    )
                 );
             }
 
@@ -112,15 +110,19 @@ public class ApprovalDAO {
 
     public void updateApprovalStatus(int approvalId, ApprovalStatus status, String comment) {
         String sql =
-                "UPDATE approvals " +
-                "SET status = ?, comment = ? " +
-                "WHERE id = ?";
+            "UPDATE approvals " +
+            "SET status = ?, comment = ? " +
+            "WHERE id = ?";
 
         try {
             PreparedStatement pstmt = connection.prepareStatement(sql);
             pstmt.setString(1,status.name());
 
-            pstmt.setString(2,comment);
+            String normalizedComment = comment == null || comment.trim().isEmpty()
+                    ? "No comment provided."
+                    : comment.trim();
+
+            pstmt.setString(2, normalizedComment);
             pstmt.setInt(3,approvalId);
 
             pstmt.executeUpdate();
@@ -132,12 +134,11 @@ public class ApprovalDAO {
     }
 
     public List<Approval> getApprovalsByRequestId(int requestId) {
-
         List<Approval> approvals = new ArrayList<>();
 
         String sql =
-                "SELECT * FROM approvals " +
-                "WHERE request_id = ?";
+            "SELECT * FROM approvals " +
+            "WHERE request_id = ?";
 
         try {
             PreparedStatement pstmt = connection.prepareStatement(sql);
@@ -147,23 +148,21 @@ public class ApprovalDAO {
 
             while (rs.next()) {
                 Approval approval = new Approval(
+                    rs.getInt("id"),
+                    rs.getInt("request_id"),
 
-                                rs.getInt("id"),
+                    Department.valueOf(
+                        rs.getString(
+                                "department_name"
+                        )
+                    ),
 
-                                rs.getInt("request_id"),
+                    ApprovalStatus.valueOf(
+                        rs.getString("status")
+                    ),
 
-                                Department.valueOf(
-                                        rs.getString(
-                                                "department_name"
-                                        )
-                                ),
-
-                                ApprovalStatus.valueOf(
-                                        rs.getString("status")
-                                ),
-
-                                rs.getString("comment")
-                        );
+                    rs.getString("comment")
+                );
 
                 approvals.add(approval);
             }
@@ -179,8 +178,8 @@ public class ApprovalDAO {
         List<Approval> approvals = new ArrayList<>();
 
         String sql =
-                "SELECT * FROM approvals " +
-                "WHERE request_id = ?";
+            "SELECT * FROM approvals " +
+            "WHERE request_id = ?";
 
         try {
             PreparedStatement pstmt = connection.prepareStatement(sql);
@@ -189,23 +188,21 @@ public class ApprovalDAO {
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 Approval approval =
-                        new Approval(
-                                rs.getInt("id"),
-                                rs.getInt("request_id"),
+                    new Approval(
+                        rs.getInt("id"),
+                        rs.getInt("request_id"),
 
-                                Department.valueOf(
-                                        rs.getString(
-                                                "department_name"
-                                        )
-                                ),
+                        Department.valueOf(
+                            rs.getString(
+                                "department_name"
+                            )
+                        ),
 
-                                ApprovalStatus.valueOf(
-                                        rs.getString("status")
-                                ),
-
-                                rs.getString("comment")
-                        );
-
+                        ApprovalStatus.valueOf(
+                            rs.getString("status")
+                        ),
+                        rs.getString("comment")
+                    );
                 approvals.add(approval);
             }
 
@@ -251,9 +248,9 @@ public class ApprovalDAO {
     public Approval getApprovalByRequestAndDepartment(int requestId, Department department) {
 
         String sql =
-                "SELECT * FROM approvals " +
-                "WHERE request_id = ? " +
-                "AND department_name = ?";
+            "SELECT * FROM approvals " +
+            "WHERE request_id = ? " +
+            "AND department_name = ?";
 
         try {
             PreparedStatement pstmt = connection.prepareStatement(sql);
@@ -264,15 +261,15 @@ public class ApprovalDAO {
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return new Approval(
-                        rs.getInt("id"),
-                        rs.getInt("request_id"),
+                    rs.getInt("id"),
+                    rs.getInt("request_id"),
 
-                        Department.valueOf(rs.getString("department_name")),
-                        ApprovalStatus.valueOf(
-                                rs.getString("status")
-                        ),
+                    Department.valueOf(rs.getString("department_name")),
+                    ApprovalStatus.valueOf(
+                            rs.getString("status")
+                    ),
 
-                        rs.getString("comment")
+                    rs.getString("comment")
                 );
             }
 

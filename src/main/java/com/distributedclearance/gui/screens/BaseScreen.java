@@ -6,6 +6,7 @@ import javafx.scene.layout.BorderPane;
 public abstract class BaseScreen extends BorderPane {
 
     public BaseScreen() {
+        getStyleClass().add("app-root");
         setPadding(new Insets(20));
     }
 

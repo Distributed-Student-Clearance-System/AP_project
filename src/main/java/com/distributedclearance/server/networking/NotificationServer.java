@@ -11,14 +11,10 @@ import java.util.Iterator;
 import java.util.List;
 
 public class NotificationServer {
-
     private static final int PORT = 7000;
-
-    private static final List<PrintWriter> clients =
-            new ArrayList<>();
+    private static final List<PrintWriter> clients = new ArrayList<>();
 
     public static void main(String[] args) {
-
         try {
             ServerSocket serverSocket = new ServerSocket(PORT);
 
@@ -26,20 +22,21 @@ public class NotificationServer {
 
             while (true) {
                 Socket socket = serverSocket.accept();
+
                 new Thread(() -> {
                     try {
                         BufferedReader reader =
-                                new BufferedReader(
-                                        new InputStreamReader(
-                                                socket.getInputStream()
-                                        )
+                            new BufferedReader(
+                                new InputStreamReader(
+                                    socket.getInputStream()
+                                )
                                 );
 
                         PrintWriter writer =
-                                new PrintWriter(
-                                        socket.getOutputStream(),
-                                        true
-                                );
+                            new PrintWriter(
+                                socket.getOutputStream(),
+                                true
+                            );
 
                         String firstMessage = reader.readLine();
 
@@ -68,8 +65,8 @@ public class NotificationServer {
                          * NORMAL NOTIFICATION MESSAGE
                          */
                         System.out.println(
-                                "SERVER RECEIVED: "
-                                + firstMessage
+                            "SERVER RECEIVED: "
+                            + firstMessage
                         );
 
                         System.out.println("BROADCASTING...");
@@ -77,12 +74,12 @@ public class NotificationServer {
                         synchronized (clients) {
 
                             Iterator<PrintWriter> iterator =
-                                    clients.iterator();
+                                clients.iterator();
 
                             while (iterator.hasNext()) {
 
                                 PrintWriter client =
-                                        iterator.next();
+                                    iterator.next();
 
                                 try {
 

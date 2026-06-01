@@ -5,40 +5,38 @@ public class DepartmentLauncher {
     public static void main(String[] args) {
 
         Thread financeThread =
-                new Thread(() -> {
+            new Thread(() -> {
+                DepartmentServer finance =
+                    new DepartmentServer(
+                        6001,
+                        "FINANCE"
+                    );
 
-                    DepartmentServer finance =
-                            new DepartmentServer(
-                                    6001,
-                                    "FINANCE"
-                            );
-
-                    finance.startServer();
-                });
+                finance.startServer();
+        });
 
         Thread libraryThread =
-                new Thread(() -> {
+            new Thread(() -> {
+                DepartmentServer library =
+                    new DepartmentServer(
+                        6002,
+                        "LIBRARY"
+                    );
 
-                    DepartmentServer library =
-                            new DepartmentServer(
-                                    6002,
-                                    "LIBRARY"
-                            );
-
-                    library.startServer();
-                });
+                library.startServer();
+        });
 
         Thread registrarThread =
-                new Thread(() -> {
+            new Thread(() -> {
 
-                    DepartmentServer registrar =
-                            new DepartmentServer(
-                                    6003,
-                                    "REGISTRAR"
-                            );
+                DepartmentServer registrar =
+                    new DepartmentServer(
+                        6003,
+                        "REGISTRAR"
+                    );
 
-                    registrar.startServer();
-                });
+                registrar.startServer();
+            });
 
         financeThread.start();
         libraryThread.start();

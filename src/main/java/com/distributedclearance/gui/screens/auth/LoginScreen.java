@@ -18,7 +18,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.TextAlignment;
 
 public class LoginScreen extends BaseScreen {
 
@@ -32,40 +35,48 @@ public class LoginScreen extends BaseScreen {
     @Override
     protected void initialize() {
         Label title = new Label("Distributed Student Clearance System");
-        title.setStyle(
-                "-fx-font-size: 28px;" +
-                "-fx-font-weight: bold;"
-        );
+        title.getStyleClass().addAll("app-title", "login-title");
+        title.setWrapText(true);
+        title.setAlignment(Pos.CENTER);
+        title.setTextAlignment(TextAlignment.CENTER);
+        title.setMaxWidth(560);
 
         Label subtitle = new Label("Login to continue");
-        subtitle.setStyle(
-                "-fx-font-size: 14px;" +
-                "-fx-text-fill: gray;"
-        );
+        subtitle.getStyleClass().add("subtitle-label");
+
+        Label usernameIcon = new Label("👤");
+        usernameIcon.getStyleClass().add("input-icon");
 
         TextField usernameField = new TextField();
         usernameField.setPromptText("Username");
-        usernameField.setMaxWidth(300);
-        usernameField.setPrefHeight(40);
+        usernameField.setPrefWidth(360);
+        usernameField.getStyleClass().add("form-input");
+        usernameField.setMaxWidth(Double.MAX_VALUE);
+
+        HBox usernameGroup = new HBox(10, usernameIcon, usernameField);
+        usernameGroup.getStyleClass().add("input-group");
+
+        Label passwordIcon = new Label("🔒");
+        passwordIcon.getStyleClass().add("input-icon");
 
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Password");
-        passwordField.setMaxWidth(300);
-        passwordField.setPrefHeight(40);
+        passwordField.setPrefWidth(360);
+        passwordField.getStyleClass().add("form-input");
+        passwordField.setMaxWidth(Double.MAX_VALUE);
+
+        HBox passwordGroup = new HBox(10, passwordIcon, passwordField);
+        passwordGroup.getStyleClass().add("input-group");
 
         Label statusLabel = new Label();
-        statusLabel.setStyle("-fx-text-fill: red;");
+        statusLabel.getStyleClass().add("error-label");
+        statusLabel.setWrapText(true);
+        statusLabel.setMaxWidth(Double.MAX_VALUE);
 
         Button loginButton = new Button("Login");
-        loginButton.setPrefWidth(300);
-        loginButton.setPrefHeight(40);
-
-        loginButton.setStyle(
-                "-fx-background-color: #2563eb;" +
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 14px;" +
-                "-fx-font-weight: bold;"
-        );
+        loginButton.setPrefWidth(360);
+        loginButton.getStyleClass().addAll("primary-button", "login-button");
+        loginButton.setMaxWidth(Double.MAX_VALUE);
 
         loginButton.setOnAction(event -> {
 
@@ -83,30 +94,32 @@ public class LoginScreen extends BaseScreen {
                 switch (user.getRole()) {
                     case STUDENT -> {
                         StudentDashboard studentDashboard =
-                                new StudentDashboard((Student) user);
+                            new StudentDashboard((Student) user);   
 
                         SceneManager.switchScene(
-                                studentDashboard.createScene()
+                            studentDashboard.createScene()
                         );
                     }
 
                     case OFFICER -> {
                         OfficerDashboard officerDashboard =
-                                new OfficerDashboard((DeptOfficer) user);
+                            new OfficerDashboard((DeptOfficer) user);
 
                         SceneManager.switchScene(
-                                officerDashboard.createScene()
+                            officerDashboard.createScene()
                         );
                     }
 
                     case ADMIN -> {
                         AdminDashboard adminDashboard =
-                                new AdminDashboard((Admin) user);
+                            new AdminDashboard((Admin) user);
 
                         SceneManager.switchScene(
-                                adminDashboard.createScene()
+                            adminDashboard.createScene()
                         );
                     }
+
+                    default -> statusLabel.setText("Unsupported user role.");
                 }
 
             } else {
@@ -114,24 +127,31 @@ public class LoginScreen extends BaseScreen {
             }
         });
 
-        VBox container = new VBox(15);
+        VBox loginCard = new VBox(14);
 
-        container.setAlignment(Pos.CENTER);
-        container.setPadding(new Insets(40));
+        loginCard.setAlignment(Pos.CENTER);
+        loginCard.setPadding(new Insets(36));
+        loginCard.setPrefWidth(620);
+        loginCard.setMaxWidth(620);
+        loginCard.getStyleClass().addAll("auth-card", "login-card");
 
-        container.getChildren().addAll(
-                title,
-                subtitle,
-                usernameField,
-                passwordField,
-                loginButton,
-                statusLabel
+        loginCard.getChildren().addAll(
+            title,
+            subtitle,
+            usernameGroup,
+            passwordGroup,
+            loginButton,
+            statusLabel
         );
 
-        setCenter(container);
+        StackPane root = new StackPane(loginCard);
+        root.setAlignment(Pos.CENTER);
+        setCenter(root);
     }
 
     public Scene createScene() {
-        return new Scene(this, 1000, 700);
+        Scene scene = new Scene(this, 1000, 700);
+        SceneManager.applyTheme(scene);
+        return scene;
     }
 }

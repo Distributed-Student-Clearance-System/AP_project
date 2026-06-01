@@ -17,11 +17,12 @@ import com.distributedclearance.server.networking.NotificationListener;
 import com.distributedclearance.server.networking.SocketClient;
 
 import javafx.application.Platform;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -29,7 +30,11 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
+
+import com.distributedclearance.gui.navigation.SceneManager;
 
 public class StudentDashboard extends BaseScreen implements NotificationListener {
 
@@ -41,7 +46,8 @@ public class StudentDashboard extends BaseScreen implements NotificationListener
     private Label overallStatusLabel;
     private ListView<String> notificationHistoryList;
     private TableView<ClearanceRequest> requestHistoryTable;
-    private ListView<String> approvalList;
+        private TableView<Approval> approvalTable;
+        private Timeline refreshTimeline;
 
     private int currentRequestId = -1;
 
@@ -52,65 +58,90 @@ public class StudentDashboard extends BaseScreen implements NotificationListener
 
     @Override
     protected void initialize() {
-
-        VBox container = new VBox(20);
-
-        container.setPadding(new Insets(20));
-        container.setAlignment(Pos.TOP_CENTER);
+        VBox content = new VBox(18);
+        content.setPadding(new Insets(20));
+        content.setFillWidth(true);
+        content.getStyleClass().add("dashboard-card");
 
         Label title = new Label("Student Dashboard");
+        title.getStyleClass().add("app-title");
 
-        title.setStyle(
-            "-fx-font-size: 24px;" +
-            "-fx-font-weight: bold;"
-        );
+        Label welcomeLabel = new Label("Welcome, " + student.getFullName());
+        welcomeLabel.getStyleClass().add("welcome-label");
 
-        Label welcomeLabel =
-                new Label("Welcome, " + student.getFullName());
+        overallStatusLabel = new Label("Overall Clearance Status: PENDING");
+        overallStatusLabel.getStyleClass().add("status-label");
 
-        overallStatusLabel =
-                new Label("Overall Clearance Status: PENDING");
+        VBox header = new VBox(6, title, welcomeLabel, overallStatusLabel);
+        header.setFillWidth(true);
 
-        overallStatusLabel.setStyle(
-                "-fx-font-size: 16px;" +
-                "-fx-font-weight: bold;"
-        );
-
-        Label notificationHistoryTitle =
-                new Label("Notification History");
-
-        notificationHistoryTitle.setStyle(
-                "-fx-font-size: 16px;" +
-                "-fx-font-weight: bold;"
-        );
+        Label notificationHistoryTitle = new Label("Notification History");
+        notificationHistoryTitle.getStyleClass().add("section-title");
 
         notificationHistoryList = new ListView<>();
-        notificationHistoryList.setPrefHeight(160);
         notificationHistoryList.setPlaceholder(
                 new Label("No notifications yet.")
         );
+        notificationHistoryList.getStyleClass().add("data-list");
+        notificationHistoryList.setMaxWidth(Double.MAX_VALUE);
 
-        Button submitButton =
-                new Button("Submit Clearance Request");
-
-        submitButton.setPrefWidth(250);
+        Button submitButton = new Button("Submit Clearance Request");
+        submitButton.getStyleClass().add("primary-button");
+        submitButton.setMaxWidth(Double.MAX_VALUE);
 
         Label statusLabel = new Label();
+        statusLabel.getStyleClass().add("status-label");
 
-        approvalList = new ListView<>();
-        approvalList.setPrefHeight(300);
+        Label approvalDetailsTitle = new Label("Department Approval Details");
+        approvalDetailsTitle.getStyleClass().add("section-title");
 
-        Label requestHistoryTitle = new Label("Request History");
-        requestHistoryTitle.setStyle(
-                "-fx-font-size: 16px;" +
-                "-fx-font-weight: bold;"
+        approvalTable = new TableView<>();
+        approvalTable.setPlaceholder(
+                new Label("No approval details available yet.")
+        );
+        approvalTable.getStyleClass().add("dark-table");
+        approvalTable.setMaxWidth(Double.MAX_VALUE);
+
+        TableColumn<Approval, String> departmentColumn =
+                new TableColumn<>("Department");
+        departmentColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(
+                        cellData.getValue().getDepartment().name()
+                )
         );
 
+        TableColumn<Approval, String> statusColumn =
+                new TableColumn<>("Status");
+        statusColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(
+                        cellData.getValue().getStatus().name()
+                )
+        );
+
+        TableColumn<Approval, String> commentColumn =
+                new TableColumn<>("Officer Comment / Reason");
+        commentColumn.setCellValueFactory(cellData -> {
+            String comment = cellData.getValue().getComment();
+            if (comment == null || comment.trim().isEmpty()) {
+                comment = "No comment provided.";
+            }
+
+            return new SimpleStringProperty(comment);
+        });
+
+        approvalTable.getColumns().add(departmentColumn);
+        approvalTable.getColumns().add(statusColumn);
+        approvalTable.getColumns().add(commentColumn);
+
+        Label requestHistoryTitle = new Label("Request History");
+        requestHistoryTitle.getStyleClass().add("section-title");
+
         requestHistoryTable = new TableView<>();
-        requestHistoryTable.setPrefHeight(220);
         requestHistoryTable.setPlaceholder(
                 new Label("No requests submitted yet.")
         );
+        requestHistoryTable.getStyleClass().add("dark-table");
+        requestHistoryTable.setMaxWidth(Double.MAX_VALUE);
 
         TableColumn<ClearanceRequest, Integer> requestIdColumn =
                 new TableColumn<>("Request ID");
@@ -140,11 +171,21 @@ public class StudentDashboard extends BaseScreen implements NotificationListener
                 )
         );
 
-        requestHistoryTable.getColumns().addAll(
-            requestIdColumn,
-            submittedAtColumn,
-            overallRequestStatusColumn
-        );
+                requestHistoryTable.getColumns().add(requestIdColumn);
+                requestHistoryTable.getColumns().add(submittedAtColumn);
+                requestHistoryTable.getColumns().add(overallRequestStatusColumn);
+
+                VBox notificationSection = new VBox(8, notificationHistoryTitle, notificationHistoryList);
+                notificationSection.setFillWidth(true);
+
+                VBox requestSection = new VBox(8, requestHistoryTitle, requestHistoryTable);
+                requestSection.setFillWidth(true);
+
+                VBox approvalSection = new VBox(8, approvalDetailsTitle, approvalTable);
+                approvalSection.setFillWidth(true);
+
+                VBox actionSection = new VBox(10, submitButton, statusLabel);
+                actionSection.setFillWidth(true);
 
         submitButton.setOnAction(event -> {
             boolean success = requestDAO.submitRequest(student);
@@ -167,20 +208,19 @@ public class StudentDashboard extends BaseScreen implements NotificationListener
             }
         });
 
-        container.getChildren().addAll(
-            title,
-            welcomeLabel,
-            notificationHistoryTitle,
-            notificationHistoryList,
-            overallStatusLabel,
-            submitButton,
-            statusLabel,
-            requestHistoryTitle,
-            requestHistoryTable,
-            approvalList
+        content.getChildren().addAll(
+                header,
+                notificationSection,
+                actionSection,
+                requestSection,
+                approvalSection
         );
 
-        setCenter(container);
+        VBox.setVgrow(notificationHistoryList, Priority.ALWAYS);
+        VBox.setVgrow(requestHistoryTable, Priority.ALWAYS);
+        VBox.setVgrow(approvalTable, Priority.ALWAYS);
+
+        setCenter(content);
 
         NotificationClient client = new NotificationClient(this);
 
@@ -189,78 +229,89 @@ public class StudentDashboard extends BaseScreen implements NotificationListener
         notificationThread.setDaemon(true);
         notificationThread.start();
         loadRequestHistory();
+        refreshTimeline = new Timeline(
+                new KeyFrame(Duration.seconds(5), event -> {
+                    loadRequestHistory();
+                    if (currentRequestId != -1) {
+                        loadApprovals();
+                    }
+                })
+        );
+        refreshTimeline.setCycleCount(Timeline.INDEFINITE);
+        refreshTimeline.play();
     }
 
-        private void loadRequestHistory() {
+    private void loadRequestHistory() {
 
-            List<ClearanceRequest> requests =
-                            requestDAO.getRequestsByStudentId(student.getId());
+        List<ClearanceRequest> requests =
+                requestDAO.getRequestsByStudentId(student.getId());
 
-            ObservableList<ClearanceRequest> historyItems =
-                            FXCollections.observableArrayList(requests);
+        ObservableList<ClearanceRequest> historyItems =
+                FXCollections.observableArrayList(requests);
 
-            requestHistoryTable.setItems(historyItems);
-        }
+        requestHistoryTable.setItems(historyItems);
+    }
 
     private void loadApprovals() {
 
-        approvalList.getItems().clear();
+        approvalTable.getItems().clear();
+
+        if (currentRequestId == -1) {
+            overallStatusLabel.setText("Overall Clearance Status: PENDING");
+            return;
+        }
 
         List<Approval> approvals =
                 approvalDAO.getApprovalsByRequestId(
                         currentRequestId
                 );
 
-        for (Approval approval : approvals) {
+        ObservableList<Approval> approvalItems =
+                FXCollections.observableArrayList(approvals);
 
-            approvalList.getItems().add(
-                    approval.getDepartment()
-                    + " → "
-                    + approval.getStatus()
-            );
-        }
+        approvalTable.setItems(approvalItems);
 
                 updateOverallStatus(approvals);
         }
 
         private void updateOverallStatus(List<Approval> approvals) {
-            String overallStatus = "PENDING";
+                String overallStatus = "PENDING";
 
-            if (approvals != null && !approvals.isEmpty()) {
+                if (approvals != null && !approvals.isEmpty()) {
 
-                    boolean allApproved = true;
+                        boolean allApproved = true;
 
-                    for (Approval approval : approvals) {
+                        for (Approval approval : approvals) {
 
-                            if (approval.getStatus() == ApprovalStatus.REJECTED) {
-                                    overallStatus = "REJECTED";
-                                    allApproved = false;
-                                    break;
-                            }
+                                if (approval.getStatus() == ApprovalStatus.REJECTED) {
+                                        overallStatus = "REJECTED";
+                                        allApproved = false;
+                                        break;
+                                }
 
-                            if (approval.getStatus() != ApprovalStatus.APPROVED) {
-                                    allApproved = false;
-                            }
-                    }
+                                if (approval.getStatus() != ApprovalStatus.APPROVED) {
+                                        allApproved = false;
+                                }
+                        }
 
-                    if (allApproved) {
-                            overallStatus = "CLEARED";
-                    }
+                        if (allApproved) {
+                                overallStatus = "CLEARED";
             }
+                }
 
-            overallStatusLabel.setText(
-                            "Overall Clearance Status: " + overallStatus
-            );
+                overallStatusLabel.setText(
+                                "Overall Clearance Status: " + overallStatus
+                );
     }
 
         private String formatSubmittedAt(LocalDateTime submittedAt) {
-            if (submittedAt == null) {
-                    return "N/A";
-            }
+                if (submittedAt == null) {
+                        return "N/A";
+                }
 
-            return submittedAt.format(
-                            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-            );
+                return submittedAt.format(
+                                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                );
         }
 
         private String formatOverallRequestStatus(RequestStatus status) {
@@ -269,14 +320,16 @@ public class StudentDashboard extends BaseScreen implements NotificationListener
                 }
 
                 if (status == RequestStatus.FULLY_APPROVED) {
-                                return "CLEARED";
+                        return "CLEARED";
                 }
 
                 return status.name();
         }
 
     public Scene createScene() {
-        return new Scene(this, 1000, 700);
+                Scene scene = new Scene(this, 1000, 700);
+                SceneManager.applyTheme(scene);
+                return scene;
     }
 
     @Override
