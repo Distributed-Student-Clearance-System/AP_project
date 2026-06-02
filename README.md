@@ -55,36 +55,36 @@ A Java-based **Distributed Student Clearance Management System** that automates 
 ## System Architecture
 
 ```text
-                     +----------------+
-                     |     Student    |
-                     +--------+-------+
-                              |
-                              v
-                     +----------------+
-                     |   Main Server  |
-                     +--------+-------+
-                              |
-          -----------------------------------------
-          |                  |                    |
-          v                  v                    v
-+----------------+ +----------------+ +----------------+
-| Finance Server | | Library Server | | Registrar Server|
-+----------------+ +----------------+ +----------------+
-          |                  |                    |
-          -----------------------------------------
-                              |
-                              v
-                     +----------------+
-                     |    Database    |
-                     +----------------+
+                          +----------------+
+                          |    Student     |
+                          +--------+-------+
+                                   |
+                                   v
+                          +----------------+
+                          |   Main Server  |
+                          +--------+-------+
+                                   |
+     ---------------------------------------------------------
+     |                  |                 |                  |
+     v                  v                 v                  v
 
-                              |
-                              v
-
-                     +----------------+
-                     | Notification   |
-                     |    Server      |
-                     +----------------+
++------------+   +------------+   +-------------+   +-------------+
+|  Finance   |   |  Library   |   | Registrar   |   | Dormitory   |
+|   Server   |   |   Server   |   |   Server    |   |   Server    |
++------------+   +------------+   +-------------+   +-------------+
+     |                  |                 |                  |
+     ---------------------------------------------------------
+                                   |
+                                   v
+                          +----------------+
+                          |    Database    |
+                          +----------------+
+                                   |
+                                   v
+                          +----------------+
+                          | Notification   |
+                          |    Server      |
+                          +----------------+
 ```
 
 ---
@@ -144,11 +144,11 @@ Stores:
 
 ## Running the Project
 
-### 1. Clone Repository
+### Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/DistributedStudentClearanceSystem.git
-cd DistributedStudentClearanceSystem
+git clone https://github.com/Distributed-Student-Clearance-System/AP_project.git
+cd AP_project
 ```
 
 ### 2. Configure MySQL
@@ -234,18 +234,6 @@ mvn javafx:run
 
 ---
 
-## Future Improvements
-
-* REST API integration
-* Docker deployment
-* Email notifications
-* Audit logging
-* Dashboard analytics
-* Advanced reporting
-* Cloud deployment
-
----
-
 ## Screenshots
 
 ### Login Screen
@@ -263,11 +251,3 @@ mvn javafx:run
 ### Admin Dashboard
 
 *Add screenshot here*
-
----
-
-## Author
-
-Distributed Student Clearance System
-
-Developed as an academic project to demonstrate distributed system concepts using Java, JavaFX, MySQL, and Socket Programming.
